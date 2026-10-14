@@ -16,7 +16,7 @@ Organisations store critical information across many systems. Over time, file fo
 
 - [x] Day 1: project setup, `assets` table in SQLite
 - [x] Day 2: information asset inventory (add, list, sample data, input validation)
-- [ ] Day 3: risk assessment
+- [x] Day 3: risk assessment (format-based scoring, `risk` command, risk document in `docs/`)
 - [ ] Day 4: policy and retention schedule
 - [ ] Day 5-6: file scanner and format detection
 - [ ] Day 7: testing
@@ -25,10 +25,10 @@ Organisations store critical information across many systems. Over time, file fo
 ## Usage
 
 Run these from the `src` folder:
-
     python -m dcm init
     python -m dcm list
     python -m dcm add --name "Employee Handbook" --category "HR records" --owner HR --location SharePoint --format PDF --criticality 2
+    python -m dcm risk
 
 Load 10 sample assets for the fictional company:
 
