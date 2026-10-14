@@ -1,6 +1,6 @@
 import argparse
 
-from dcm import db
+from dcm import db, risk
 
 
 def show_assets():
@@ -13,12 +13,28 @@ def show_assets():
     print(f"\nTotal: {len(rows)} assets")
 
 
+def show_risk():
+    scored = []
+    for r in db.list_assets():
+        score = risk.risk_score(r["file_format"], r["criticality"])
+        scored.append((score, r))
+    scored.sort(key=lambda item: item[0], reverse=True)
+
+    print(f"{'ID':<4}{'Name':<28}{'Format':<10}{'Crit':<6}{'Score':<7}{'Level':<8}")
+    print("-" * 63)
+    for score, r in scored:
+        fmt = r["file_format"] or "-"
+        level = risk.risk_level(score)
+        print(f"{r['id']:<4}{r['name']:<28}{fmt:<10}{r['criticality']:<6}{score:<7}{level:<8}")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="dcm", description="Digital Continuity Manager")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="create the database")
     sub.add_parser("list", help="show all assets")
+    sub.add_parser("risk", help="rank assets by continuity risk")
 
     add = sub.add_parser("add", help="add a new asset")
     add.add_argument("--name", required=True)
@@ -35,6 +51,8 @@ def main():
         print("Database ready at", db.DB_PATH)
     elif args.command == "list":
         show_assets()
+    elif args.command == "risk":
+        show_risk()
     elif args.command == "add":
         db.add_asset(
             args.name,
