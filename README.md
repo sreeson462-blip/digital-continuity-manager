@@ -1,6 +1,6 @@
 # Digital Continuity Manager
 
-A Python tool that helps an organisation keep its digital information usable, findable and trustworthy over time. Built as a phase-by-phase project for a fictional IT services company.
+A Python tool that helps an organisation keep its digital information usable, findable and trustworthy over time. Built as a phase-by-phase project for a fictional IT services company, NexaTech Solutions.
 
 ## Problem
 
@@ -10,17 +10,37 @@ Organisations store critical information across many systems. Over time, file fo
 
 - Python 3
 - SQLite (built-in `sqlite3` module)
+- Command-line interface with `argparse`
 
 ## Progress
 
 - [x] Day 1: project setup, `assets` table in SQLite
-- [ ] Day 2: add and list assets
+- [x] Day 2: information asset inventory (add, list, sample data, input validation)
 - [ ] Day 3: risk assessment
 - [ ] Day 4: policy and retention schedule
 - [ ] Day 5-6: file scanner and format detection
 - [ ] Day 7: testing
 - [ ] Day 8: final report
 
-## Run
+## Usage
 
-    python -m dcm
+Run these from the `src` folder:
+
+    python -m dcm init
+    python -m dcm list
+    python -m dcm add --name "Employee Handbook" --category "HR records" --owner HR --location SharePoint --format PDF --criticality 2
+
+Load 10 sample assets for the fictional company:
+
+    python -m dcm.seed
+
+## Asset fields
+
+| Field | Meaning |
+|---|---|
+| name | What the asset is |
+| category | Type of information (contracts, source code, backups...) |
+| owner | Team responsible for it |
+| location | System or place where it lives |
+| file_format | Format of the data (PDF, XLS, MDB...), used later for obsolescence risk |
+| criticality | 1 (low) to 5 (business critical) |
