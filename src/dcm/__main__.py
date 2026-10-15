@@ -1,6 +1,6 @@
 import argparse
 
-from dcm import db, policy, risk
+from dcm import db, policy, risk, scanner
 
 
 def show_assets():
@@ -45,6 +45,18 @@ def show_retention():
         print(f"{r['id']:<4}{r['name']:<28}{r['category']:<18}{fmt:<10}{years:<7}{fmt_risk:<9}{status:<8}")
 
 
+def show_scan(folder):
+    results = scanner.scan_folder(folder)
+    print(f"{'Name':<26}{'Format':<8}{'Size':<7}{'FmtRisk':<9}{'Checksum':<14}{'Flag':<6}")
+    print("-" * 70)
+    for f in results:
+        fmt = f["format"] or "-"
+        flag = "RISKY" if f["format_risk"] >= 4 else "OK"
+        print(f"{f['name']:<26}{fmt:<8}{f['size']:<7}{f['format_risk']:<9}{f['sha256'][:12]:<14}{flag:<6}")
+    risky = sum(1 for f in results if f["format_risk"] >= 4)
+    print(f"\nScanned {len(results)} files, {risky} in risky formats")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="dcm", description="Digital Continuity Manager")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -53,6 +65,9 @@ def main():
     sub.add_parser("list", help="show all assets")
     sub.add_parser("risk", help="rank assets by continuity risk")
     sub.add_parser("retention", help="check formats against retention periods")
+
+    scan = sub.add_parser("scan", help="scan a folder and check file formats")
+    scan.add_argument("folder", nargs="?", default=str(db.PROJECT_ROOT / "sample_data"))
 
     add = sub.add_parser("add", help="add a new asset")
     add.add_argument("--name", required=True)
@@ -73,6 +88,8 @@ def main():
         show_risk()
     elif args.command == "retention":
         show_retention()
+    elif args.command == "scan":
+        show_scan(args.folder)
     elif args.command == "add":
         db.add_asset(
             args.name,
