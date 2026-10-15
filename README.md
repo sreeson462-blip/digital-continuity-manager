@@ -18,7 +18,7 @@ Organisations store critical information across many systems. Over time, file fo
 - [x] Day 2: information asset inventory (add, list, sample data, input validation)
 - [x] Day 3: risk assessment (format-based scoring, `risk` command, risk document in `docs/`)
 - [x] Day 4: policy and retention schedule (`retention` command, policy document in `docs/`)
-- [ ] Day 5-6: file scanner and format detection
+- [x] Day 5-6: file scanner and format detection
 - [ ] Day 7: testing
 - [ ] Day 8: final report
 
