@@ -1,6 +1,6 @@
 import argparse
 
-from dcm import db, risk
+from dcm import db, policy, risk
 
 
 def show_assets():
@@ -28,6 +28,23 @@ def show_risk():
         print(f"{r['id']:<4}{r['name']:<28}{fmt:<10}{r['criticality']:<6}{score:<7}{level:<8}")
 
 
+def show_retention():
+    order = {"ACTION": 0, "REVIEW": 1, "OK": 2}
+    results = []
+    for r in db.list_assets():
+        years = policy.retention_years(r["category"])
+        fmt_risk = risk.format_risk(r["file_format"])
+        status = policy.retention_status(years, fmt_risk)
+        results.append((status, years, fmt_risk, r))
+    results.sort(key=lambda item: order[item[0]])
+
+    print(f"{'ID':<4}{'Name':<28}{'Category':<18}{'Format':<10}{'Years':<7}{'FmtRisk':<9}{'Status':<8}")
+    print("-" * 84)
+    for status, years, fmt_risk, r in results:
+        fmt = r["file_format"] or "-"
+        print(f"{r['id']:<4}{r['name']:<28}{r['category']:<18}{fmt:<10}{years:<7}{fmt_risk:<9}{status:<8}")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="dcm", description="Digital Continuity Manager")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -35,6 +52,7 @@ def main():
     sub.add_parser("init", help="create the database")
     sub.add_parser("list", help="show all assets")
     sub.add_parser("risk", help="rank assets by continuity risk")
+    sub.add_parser("retention", help="check formats against retention periods")
 
     add = sub.add_parser("add", help="add a new asset")
     add.add_argument("--name", required=True)
@@ -53,6 +71,8 @@ def main():
         show_assets()
     elif args.command == "risk":
         show_risk()
+    elif args.command == "retention":
+        show_retention()
     elif args.command == "add":
         db.add_asset(
             args.name,
