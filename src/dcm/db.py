@@ -23,8 +23,20 @@ def init_db():
             criticality INTEGER NOT NULL
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS files (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            path         TEXT NOT NULL UNIQUE,
+            sha256       TEXT NOT NULL,
+            size         INTEGER NOT NULL,
+            file_format  TEXT,
+            last_scanned TEXT NOT NULL
+        )
+    """)
     conn.commit()
     conn.close()
+
+
 def add_asset(name, category, owner, location, file_format, criticality):
     conn = connect()
     conn.execute(
@@ -42,4 +54,3 @@ def list_assets():
     rows = conn.execute("SELECT * FROM assets ORDER BY criticality DESC, name").fetchall()
     conn.close()
     return rows
-

@@ -1,7 +1,8 @@
 import hashlib
+from datetime import datetime
 from pathlib import Path
 
-from dcm import risk
+from dcm import db, risk
 
 
 def sha256_of_file(path):
@@ -18,6 +19,7 @@ def scan_folder(folder):
         if path.is_file():
             ext = path.suffix.lstrip(".").lower() or None
             results.append({
+                "path": str(path.resolve()),
                 "name": path.name,
                 "format": ext,
                 "size": path.stat().st_size,
@@ -25,3 +27,42 @@ def scan_folder(folder):
                 "format_risk": risk.format_risk(ext),
             })
     return results
+
+
+def compare_and_save(results, folder):
+    prefix = str(Path(folder).resolve())
+    conn = db.connect()
+    known = {
+        path: sha
+        for path, sha in conn.execute("SELECT path, sha256 FROM files")
+        if path.startswith(prefix)
+    }
+    now = datetime.now().isoformat(timespec="seconds")
+    report = {"new": [], "changed": [], "missing": [], "unchanged": []}
+    seen = set()
+
+    for f in results:
+        seen.add(f["path"])
+        if f["path"] not in known:
+            report["new"].append(f["name"])
+        elif known[f["path"]] != f["sha256"]:
+            report["changed"].append(f["name"])
+        else:
+            report["unchanged"].append(f["name"])
+        conn.execute(
+            "INSERT INTO files (path, sha256, size, file_format, last_scanned) "
+            "VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(path) DO UPDATE SET "
+            "sha256 = excluded.sha256, size = excluded.size, "
+            "file_format = excluded.file_format, last_scanned = excluded.last_scanned",
+            (f["path"], f["sha256"], f["size"], f["format"], now),
+        )
+
+    for path in known:
+        if path not in seen:
+            report["missing"].append(Path(path).name)
+            conn.execute("DELETE FROM files WHERE path = ?", (path,))
+
+    conn.commit()
+    conn.close()
+    return report

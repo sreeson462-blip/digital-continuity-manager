@@ -49,12 +49,24 @@ def show_scan(folder):
     results = scanner.scan_folder(folder)
     print(f"{'Name':<26}{'Format':<8}{'Size':<7}{'FmtRisk':<9}{'Checksum':<14}{'Flag':<6}")
     print("-" * 70)
-    for f in results:
-        fmt = f["format"] or "-"
-        flag = "RISKY" if f["format_risk"] >= 4 else "OK"
-        print(f"{f['name']:<26}{fmt:<8}{f['size']:<7}{f['format_risk']:<9}{f['sha256'][:12]:<14}{flag:<6}")
-    risky = sum(1 for f in results if f["format_risk"] >= 4)
-    print(f"\nScanned {len(results)} files, {risky} in risky formats")
+    risky = 0
+    for r in sorted(results, key=lambda r: r["name"]):
+        flag = "RISKY" if r["format_risk"] >= 4 else "OK"
+        if flag == "RISKY":
+            risky += 1
+        fmt = r["format"] or "-"
+        print(f"{r['name']:<26}{fmt:<8}{r['size']:<7}{r['format_risk']:<9}{r['sha256'][:12]:<14}{flag:<6}")
+    print()
+    print(f"Scanned {len(results)} files, {risky} in risky formats")
+
+    changes = scanner.compare_and_save(results, folder)
+    print()
+    print("Changes since last scan")
+    print(f"  unchanged: {len(changes['unchanged'])}")
+    for label in ("new", "changed", "missing"):
+        print(f"  {label}: {len(changes[label])}")
+        for name in changes[label]:
+            print(f"    - {name}")
 
 
 def main():
